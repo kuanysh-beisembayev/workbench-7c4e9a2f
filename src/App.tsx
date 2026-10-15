@@ -26,8 +26,19 @@ export default function App() {
   const [error, setError] = useState('');
   const [restored, setRestored] = useState(false);
   const [refresh, setRefresh] = useState(0);
+  const [activeRole, setActiveRole] = useState<Role>('carry');
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 760px)').matches);
+  const roleTabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const searchRef = useRef<HTMLInputElement>(null);
   const heroById = useMemo(() => new Map(heroes.map(hero => [hero.id, hero])), [heroes]);
+
+  useEffect(() => {
+    const query = window.matchMedia('(max-width: 760px)');
+    const update = () => setIsMobile(query.matches);
+    update();
+    query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -132,7 +143,17 @@ export default function App() {
       <section className="recommendations" aria-label="Recommendations">
         <div className="recommendations-heading"><h2>Suggested picks</h2><span>{draft.enemies.some(id => id !== null) ? 'Draft picks' : 'Role meta'}</span></div>
         {!statistics && !error && <p className="empty-message">Loading statistics…</p>}
-        <div className="role-suggestions">{suggestionsByRole.map(({role, suggestions}) => <section className="suggestions" key={role} aria-label={`${roleNames[role]} suggestions`}>
+        {isMobile && <div className="role-tabs" role="tablist" aria-label="Positions">{roles.map((role, index) => <button
+          key={role} ref={element => { roleTabRefs.current[index] = element; }} id={`role-tab-${role}`} role="tab"
+          aria-selected={activeRole === role} aria-controls={`role-panel-${role}`} tabIndex={activeRole === role ? 0 : -1}
+          onClick={() => setActiveRole(role)} onKeyDown={event => {
+            const next = event.key === 'ArrowRight' ? (index + 1) % roles.length : event.key === 'ArrowLeft' ? (index + roles.length - 1) % roles.length : event.key === 'Home' ? 0 : event.key === 'End' ? roles.length - 1 : null;
+            if (next === null) return;
+            event.preventDefault(); setActiveRole(roles[next]); roleTabRefs.current[next]?.focus();
+          }}><span>{index + 1}</span><span>{role === 'hard-support' ? 'Hard sup.' : roleNames[role].split(' · ')[0]}</span></button>)}</div>}
+        <div className="role-suggestions">{suggestionsByRole.map(({role, suggestions}) => <section className="suggestions" key={role}
+          id={`role-panel-${role}`} role={isMobile ? 'tabpanel' : undefined} hidden={isMobile && activeRole !== role}
+          aria-labelledby={isMobile ? `role-tab-${role}` : undefined} aria-label={isMobile ? undefined : `${roleNames[role]} suggestions`} tabIndex={isMobile ? 0 : undefined}>
           <div className="suggestions-heading"><h3><span className="role-number">{roles.indexOf(role) + 1}</span>{roleNames[role].split(' · ')[0]}</h3></div>
           {statistics && suggestions.length === 0 && <p className="empty-message">Not enough matchup data.</p>}
           <div className="suggestion-list">{suggestions.map((suggestion, index) => <article key={suggestion.hero.id} className="suggestion">

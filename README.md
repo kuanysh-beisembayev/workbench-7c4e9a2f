@@ -2,7 +2,7 @@
 
 A minimal React app for Dota 2 drafts. Enter allied picks, enemy picks, and bans. The app shows five recommendations for each position, with hero portraits and names. There is no rank or player-role setup.
 
-Allied slots correspond to positions 1–5: carry, mid, offlane, support, and hard support. Every slot is editable. Enemy positions remain unknown. On phones, hero search opens as a bottom sheet. Draft changes recalculate all five lists. The active draft is saved in browser storage.
+Allied slots correspond to positions 1–5: carry, mid, offlane, support, and hard support. Every slot is editable. Enemy positions remain unknown. On phones, position tabs show one recommendation list at a time. Hero search opens as a bottom sheet. Draft changes recalculate all five lists. The active draft is saved in browser storage.
 
 The app runs entirely in the browser. It has no database, account system, LLM calls, or automatic statistics updates.
 
