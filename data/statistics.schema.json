@@ -29,7 +29,7 @@
       "maxLength": 200
     },
     "sourceUrls": {
-      "maxItems": 20,
+      "maxItems": 300,
       "type": "array",
       "items": {
         "type": "string",
@@ -149,47 +149,131 @@
       }
     },
     "matchups": {
-      "maxItems": 50000,
+      "maxItems": 200000,
       "type": "array",
       "items": {
-        "type": "object",
-        "properties": {
-          "heroId": {
-            "type": "integer",
-            "exclusiveMinimum": 0,
-            "maximum": 9007199254740991
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "heroId": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "otherHeroId": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "carry",
+                  "mid",
+                  "offlane",
+                  "support",
+                  "hard-support"
+                ]
+              },
+              "otherRole": {
+                "type": "string",
+                "enum": [
+                  "carry",
+                  "mid",
+                  "offlane",
+                  "support",
+                  "hard-support"
+                ]
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "enemy",
+                  "ally"
+                ]
+              },
+              "matches": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100000000
+              },
+              "advantage": {
+                "type": "number",
+                "minimum": -25,
+                "maximum": 25
+              }
+            },
+            "required": [
+              "heroId",
+              "otherHeroId",
+              "kind",
+              "matches",
+              "advantage"
+            ],
+            "additionalProperties": false
           },
-          "otherHeroId": {
-            "type": "integer",
-            "exclusiveMinimum": 0,
-            "maximum": 9007199254740991
-          },
-          "kind": {
-            "type": "string",
-            "enum": [
-              "enemy",
-              "ally"
-            ]
-          },
-          "matches": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 100000000
-          },
-          "advantage": {
-            "type": "number",
-            "minimum": -25,
-            "maximum": 25
+          {
+            "type": "object",
+            "properties": {
+              "heroId": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "otherHeroId": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "carry",
+                  "mid",
+                  "offlane",
+                  "support",
+                  "hard-support"
+                ]
+              },
+              "otherRole": {
+                "type": "string",
+                "enum": [
+                  "carry",
+                  "mid",
+                  "offlane",
+                  "support",
+                  "hard-support"
+                ]
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "enemy",
+                  "ally"
+                ]
+              },
+              "matches": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100000000
+              },
+              "winRate": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            },
+            "required": [
+              "heroId",
+              "otherHeroId",
+              "kind",
+              "matches",
+              "winRate"
+            ],
+            "additionalProperties": false
           }
-        },
-        "required": [
-          "heroId",
-          "otherHeroId",
-          "kind",
-          "matches",
-          "advantage"
-        ],
-        "additionalProperties": false
+        ]
       }
     }
   },
