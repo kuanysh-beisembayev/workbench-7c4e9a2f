@@ -98,7 +98,7 @@ export const preferencesSchema = z.object({
 
 export async function loadData(): Promise<{ heroes: Hero[]; statistics: Statistics }> {
   const root = new URL(import.meta.env.BASE_URL, window.location.href);
-  const responses = await Promise.all(['data/heroes.json', 'data/statistics.json'].map(path => fetch(new URL(path, root))));
+  const responses = await Promise.all(['data/heroes.json', 'data/statistics.json'].map(path => fetch(new URL(path, root), { cache: 'no-cache' })));
   if (responses.some(response => !response.ok)) throw new Error('Could not load hero statistics. Try again.');
   const [catalog, stats]: unknown[] = await Promise.all(responses.map(response => response.json()));
   const heroes = catalogSchema.parse(catalog);
