@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { emptyDraft, loadData, preferencesSchema, savedDraftSchema, roles } from './data.ts';
 import type { Draft, Hero, Role, Statistics } from './data.ts';
 import { recommend } from './engine.ts';
@@ -56,9 +56,11 @@ export default function App() {
     catch { /* The draft still works when browser storage is unavailable. */ }
   }, [draft, restored]);
 
-  useEffect(() => {
-    if (pickerOpen) pickerRef.current?.showModal();
-    else pickerRef.current?.close();
+  useLayoutEffect(() => {
+    if (pickerOpen) {
+      pickerRef.current?.showModal();
+      searchRef.current?.focus({ preventScroll: true });
+    } else pickerRef.current?.close();
   }, [pickerOpen]);
 
   const unavailable = useMemo(() => new Set([...draft.allies, ...draft.enemies, ...draft.bans]), [draft]);
