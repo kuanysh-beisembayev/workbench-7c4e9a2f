@@ -6,6 +6,17 @@ Allied slots correspond to positions 1–5: carry, mid, offlane, support, and ha
 
 The app runs entirely in the browser. It has no database, account system, LLM calls, or automatic statistics updates.
 
+## Project documentation
+
+Start with [the project handoff](docs/README.md) for the current scope and accepted product decisions.
+
+- [Architecture](docs/architecture.md): source map, data flow, draft storage, and engine contract.
+- [Development and deployment](docs/development.md): local setup, checks, data updates, and troubleshooting.
+- [Recommendation data and formula](docs/data.md): source formats, scoring, and model limits.
+- [Current status and roadmap](docs/roadmap.md): known gaps, evaluation plan, and deferred features.
+
+The handoff, architecture, development guide, and roadmap are in Russian.
+
 ## Statistics are repository files
 
 - `public/data/heroes.json`: the complete hero catalog, search aliases, and team ability tags.
