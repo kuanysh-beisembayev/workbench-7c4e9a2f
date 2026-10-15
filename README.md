@@ -14,9 +14,13 @@ The app runs entirely in the browser. It has no database, account system, LLM ca
 
 Edit `public/data/statistics.json`, validate it, commit and push to `main`, then run `pnpm deploy`. The deployment publishes the updated file. There is no data upload control in the interface.
 
-The file contains a manually collected [Dota2ProTracker](https://dota2protracker.com/meta) snapshot from 2026-10-15, with 266 role records and 49,210 directional matchup and synergy records. Role tables cover the last eight days of 7000+ MMR public matches under patch 7.41f. The matchup tables do not disclose a confirmed patch-only time window. Source URLs and these limits are stored in the JSON. Published rates are stored directly; exact win counts are not invented.
+The snapshot combines 266 role records from [Dota2ProTracker](https://dota2protracker.com/meta) with 16,002 directional enemy records from [Dotabuff](https://www.dotabuff.com/heroes/doom/counters?date=week). Data was collected on 2026-10-15. Dotabuff's adjusted advantage replaces the previous raw matchup rates. Both views of each pair are reconciled without adding duplicate games. The saved source export is in `data-sources/`.
 
-The sample does not represent every rank. Matchup coverage is incomplete. Candidates need at least 500 role matches and sufficient data against every selected enemy. A role can show fewer than five heroes when evidence is insufficient. Empty drafts show role meta, which does not measure first-pick safety. The engine uses statistical heuristics; it does not predict a calibrated win probability. The interface has no numerical fit scores.
+Role meta covers eight days of 7000+ MMR public matches, labelled patch 7.41f. Dotabuff uses its “This Week” filter. Its rank, role, ranked-only and patch-only coverage are unverified. These populations differ. The JSON records these limits. The patch label describes the role source, not a verified restriction on the enemy data.
+
+The engine combines role strength, sample uncertainty, known enemy matchups, a penalty for severe counters, and missing team abilities. Before the enemy lineup is complete, it also penalizes exposure to available counter picks. Bans remove those future counters. Raw allied win rates with unknown source compatibility are no longer used. Allied positions and ability tags still affect composition.
+
+Candidates require at least 500 role matches and adjusted data against every selected enemy. The engine returns up to five candidates per position. Its weights are explicit heuristics. Aggregate tables cannot validate a predicted draft win rate. There is no calibrated win probability or numerical fit score in the interface.
 
 Hero names and identifiers come from [OpenDota constants](https://github.com/odota/dotaconstants). Hero portraits from Valve's Steam CDN are stored in `public/images/heroes` and served with the app. The build checks every hero's portrait file and dimensions. Dota 2 assets belong to Valve Corporation.
 

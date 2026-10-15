@@ -80,16 +80,16 @@ test('published win rates work without fabricated win counts', () => {
 });
 
 
-test('raw matchup rates aggregate opponent roles instead of adding their effects', () => {
+test('adjusted matchups aggregate opponent roles instead of adding their effects', () => {
   const draft = emptyDraft(); draft.enemies[0] = 3;
   const pairs = [1, 2].flatMap(heroId => roles.map(otherRole => ({
     heroId, otherHeroId: 3, kind: 'enemy' as const, role: 'offlane' as const,
-    otherRole, matches: 200, winRate: heroId === 1 ? 0.60 : 0.50,
+    otherRole, matches: 200, advantage: heroId === 1 ? 5 : -5,
   })));
   const results = recommend(heroes, { ...base, matchups: pairs }, draft, 'offlane', 'all');
   const combined = recommend(heroes, { ...base, matchups: [
-    {heroId: 1, otherHeroId: 3, kind: 'enemy', role: 'offlane', matches: 1000, winRate: 0.60},
-    {heroId: 2, otherHeroId: 3, kind: 'enemy', role: 'offlane', matches: 1000, winRate: 0.50},
+    {heroId: 1, otherHeroId: 3, kind: 'enemy', role: 'offlane', matches: 1000, advantage: 5},
+    {heroId: 2, otherHeroId: 3, kind: 'enemy', role: 'offlane', matches: 1000, advantage: -5},
   ] }, draft, 'offlane', 'all');
   assert.equal(results[0]?.hero.id, 1);
   assert.deepEqual(results.map(x => x.score), combined.map(x => x.score));
@@ -98,9 +98,9 @@ test('raw matchup rates aggregate opponent roles instead of adding their effects
 test('ally pair statistics respect both positions', () => {
   const draft = emptyDraft(); draft.allies[1] = 4;
   const stats: Statistics = {...base, matchups: [
-    {heroId: 2, otherHeroId: 4, kind: 'ally', role: 'offlane', otherRole: 'mid', matches: 1000, winRate: 0.65},
-    {heroId: 1, otherHeroId: 4, kind: 'ally', role: 'offlane', otherRole: 'support', matches: 10000, winRate: 0.95},
-    {heroId: 1, otherHeroId: 4, kind: 'ally', role: 'carry', otherRole: 'mid', matches: 10000, winRate: 0.95},
+    {heroId: 2, otherHeroId: 4, kind: 'ally', role: 'offlane', otherRole: 'mid', matches: 1000, advantage: 8},
+    {heroId: 1, otherHeroId: 4, kind: 'ally', role: 'offlane', otherRole: 'support', matches: 10000, advantage: 20},
+    {heroId: 1, otherHeroId: 4, kind: 'ally', role: 'carry', otherRole: 'mid', matches: 10000, advantage: 20},
   ]};
   assert.equal(recommend(heroes, stats, draft, 'offlane', 'all')[0]?.hero.id, 2);
 });
@@ -133,4 +133,126 @@ test('Phantom Lancer changes the carry recommendations without manual counter ru
   assert.notDeepEqual(picks, baseline);
   draft.bans = [picks[0]];
   assert.ok(recommend(catalog, published, draft, 'carry', 'all').every(x => x.hero.id !== picks[0]));
+});
+
+test('raw pair win rates cannot create artificial counters or synergy', () => {
+  const draft = emptyDraft(); draft.allies[1] = 4;
+  const stats: Statistics = { ...base, matchups: [
+    { heroId: 1, otherHeroId: 4, kind: 'ally', matches: 10000, winRate: 0.99 },
+  ] };
+  assert.deepEqual(recommend(heroes, stats, draft, 'offlane', 'all').map(x => x.score),
+    recommend(heroes, base, draft, 'offlane', 'all').map(x => x.score));
+  draft.enemies[0] = 3;
+  assert.equal(recommend(heroes, { ...base, matchups: [
+    { heroId: 1, otherHeroId: 3, kind: 'enemy', matches: 10000, winRate: 0.99 },
+  ] }, draft, 'offlane', 'all').length, 0);
+});
+
+test('an available counter reduces opening utility and its ban removes that risk', () => {
+  const stats: Statistics = { ...base,
+    roleStats: [...base.roleStats, { heroId: 3, role: 'mid', rank: 'all', matches: 10000, winRate: 0.5 }],
+    matchups: [1, 2].map(heroId => ({ heroId, otherHeroId: 3, kind: 'enemy', matches: 10000, advantage: heroId === 1 ? -8 : 0 })),
+  };
+  const opening = recommend(heroes, stats, emptyDraft(), 'offlane', 'all');
+  assert.equal(opening[0]?.hero.id, 2);
+  assert.ok(opening.find(x => x.hero.id === 1)!.components.counterRisk > 0);
+  const draft = emptyDraft(); draft.bans = [3];
+  const banned = recommend(heroes, stats, draft, 'offlane', 'all');
+  assert.equal(banned.find(x => x.hero.id === 1)!.components.counterRisk, 0);
+  assert.ok(banned.find(x => x.hero.id === 1)!.score > opening.find(x => x.hero.id === 1)!.score);
+});
+
+test('the full enemy lineup removes future counter risk and slot order has no effect', () => {
+  const draft = emptyDraft(); draft.enemies = [1, 2, 14, 44, 131];
+  const first = recommend(catalog, published, draft, 'carry', 'all');
+  assert.ok(first.every(x => x.components.counterRisk === 0));
+  draft.enemies.reverse();
+  assert.deepEqual(recommend(catalog, published, draft, 'carry', 'all'), first);
+});
+
+test('a severe bad matchup receives an additional penalty', () => {
+  const stats: Statistics = { ...base, matchups: [
+    { heroId: 1, otherHeroId: 3, kind: 'enemy', matches: 10000, advantage: -8 },
+    { heroId: 2, otherHeroId: 3, kind: 'enemy', matches: 10000, advantage: 0 },
+  ] };
+  const draft = emptyDraft(); draft.enemies[0] = 3;
+  const results = recommend(heroes, stats, draft, 'offlane', 'all');
+  assert.equal(results[0]?.hero.id, 2);
+  assert.ok(results.find(x => x.hero.id === 1)!.components.worstEnemy < 0);
+});
+
+test('a small pair sample has less effect than a large sample', () => {
+  const draft = emptyDraft(); draft.enemies[0] = 3;
+  const component = (matches: number) => recommend(heroes, { ...base, matchups: [
+    { heroId: 1, otherHeroId: 3, kind: 'enemy', matches, advantage: 8 },
+  ] }, draft, 'offlane', 'all')[0]!.components.enemy;
+  assert.ok(component(100) < component(10000));
+});
+
+test('disagreeing source views reduce the matchup effect', () => {
+  const draft = emptyDraft(); draft.enemies[0] = 3;
+  const component = (disagreement: number) => recommend(heroes, { ...base, matchups: [
+    { heroId: 1, otherHeroId: 3, kind: 'enemy', matches: 10000, advantage: 8, disagreement },
+  ] }, draft, 'offlane', 'all')[0]!.components.enemy;
+  assert.ok(component(2) < component(0));
+});
+
+test('generic pair rows do not double count a position-specific breakdown', () => {
+  const draft = emptyDraft(); draft.enemies[0] = 3;
+  const specific: Statistics = { ...base, matchups: [
+    { heroId: 1, otherHeroId: 3, kind: 'enemy', role: 'offlane', matches: 1000, advantage: 4 },
+  ] };
+  const overlapping: Statistics = { ...specific, matchups: [...specific.matchups,
+    { heroId: 1, otherHeroId: 3, kind: 'enemy', matches: 100000, advantage: -8 },
+  ] };
+  assert.deepEqual(recommend(heroes, overlapping, draft, 'offlane', 'all'), recommend(heroes, specific, draft, 'offlane', 'all'));
+});
+
+test('team ability gaps affect the evaluated position without counting its occupant', () => {
+  const tagged = catalogSchema.parse([
+    { ...heroes[0], tags: ['stun'] }, heroes[1], heroes[2], heroes[3],
+  ]);
+  const draft = emptyDraft(); draft.allies[0] = 3; draft.allies[1] = 4;
+  const results = recommend(tagged, base, draft, 'offlane', 'all');
+  assert.equal(results[0]?.hero.id, 1);
+  assert.ok(results[0]!.components.composition > 0);
+});
+
+test('the published enemy matrix is complete, reciprocal and adjusted', () => {
+  assert.equal(published.matchups.length, catalog.length * (catalog.length - 1));
+  const index = new Map(published.matchups.map(row => [`${row.heroId}:${row.otherHeroId}`, row]));
+  for (const row of published.matchups) {
+    const reverse = index.get(`${row.otherHeroId}:${row.heroId}`)!;
+    assert.equal(row.kind, 'enemy');
+    assert.ok('advantage' in row && 'advantage' in reverse);
+    assert.ok(Math.abs(row.advantage + reverse.advantage) < 1e-8);
+    assert.equal(row.matches, reverse.matches);
+  }
+  const doomAgainstAM = index.get('69:1')!;
+  assert.ok('advantage' in doomAgainstAM && doomAgainstAM.advantage > 0);
+});
+
+test('five valid recommendations survive varied draft and ban combinations', () => {
+  // Fixed generator: reproducible coverage checks, not a win-rate backtest.
+  let seed = 741;
+  const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
+  for (let trial = 0; trial < 100; trial++) {
+    const shuffled = [...catalog].sort((a, b) => a.id - b.id);
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j]!, shuffled[i]!];
+    }
+    const draft = emptyDraft();
+    const enemyCount = trial % 6; const allyCount = Math.floor(trial / 6) % 5;
+    shuffled.slice(0, enemyCount).forEach((hero, i) => { draft.enemies[i] = hero.id; });
+    shuffled.slice(5, 5 + allyCount).forEach((hero, i) => { draft.allies[i] = hero.id; });
+    draft.bans = shuffled.slice(10, 26).map(hero => hero.id);
+    const used = new Set([...draft.enemies, ...draft.allies, ...draft.bans]);
+    for (const role of roles) {
+      const picks = recommend(catalog, published, draft, role, 'all');
+      assert.equal(picks.length, 5, `${trial}: ${role}`);
+      assert.equal(new Set(picks.map(x => x.hero.id)).size, 5);
+      assert.ok(picks.every(x => !used.has(x.hero.id) && Number.isFinite(x.score)));
+    }
+  }
 });

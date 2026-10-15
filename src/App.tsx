@@ -141,7 +141,7 @@ export default function App() {
 
     </div>
       <section className="recommendations" aria-label="Recommendations">
-        <div className="recommendations-heading"><h2>Suggested picks</h2><span>{draft.enemies.some(id => id !== null) ? 'Draft picks' : 'Role meta'}</span></div>
+        <div className="recommendations-heading"><h2>Suggested picks</h2><span>{draft.enemies.some(id => id !== null) ? 'Draft picks' : 'Opening picks'}</span></div>
         {!statistics && !error && <p className="empty-message">Loading statistics…</p>}
         {isMobile && <div className="role-tabs" role="tablist" aria-label="Positions">{roles.map((role, index) => <button
           key={role} ref={element => { roleTabRefs.current[index] = element; }} id={`role-tab-${role}`} role="tab"

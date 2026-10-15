@@ -42,6 +42,7 @@ const pairIdentity = {
   otherRole: z.enum(roles).optional(),
   kind: z.enum(['enemy', 'ally']),
   matches: z.number().int().min(1).max(100_000_000),
+  disagreement: z.number().min(0).max(50).optional(),
 };
 const pairSchema = z.union([
   z.object({ ...pairIdentity, advantage: z.number().min(-25).max(25) }).strict(),
@@ -56,6 +57,12 @@ export const statisticsSchema = z.object({
   source: z.string().min(1).max(200),
   scope: z.string().max(200).optional(),
   sourceUrls: z.array(z.url()).max(300).optional(),
+  datasets: z.array(z.object({
+    source: z.string().max(100),
+    period: z.string().max(100),
+    population: z.string().max(200),
+    use: z.enum(['role-prior', 'enemy-advantage']),
+  }).strict()).max(10).optional(),
   roleStats: z.array(roleStatsSchema).max(20_000),
   matchups: z.array(pairSchema).max(200_000),
 }).superRefine((data, ctx) => {

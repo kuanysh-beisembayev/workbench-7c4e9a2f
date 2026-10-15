@@ -36,6 +36,41 @@
         "format": "uri"
       }
     },
+    "datasets": {
+      "maxItems": 10,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "period": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "population": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "use": {
+            "type": "string",
+            "enum": [
+              "role-prior",
+              "enemy-advantage"
+            ]
+          }
+        },
+        "required": [
+          "source",
+          "period",
+          "population",
+          "use"
+        ],
+        "additionalProperties": false
+      }
+    },
     "roleStats": {
       "maxItems": 20000,
       "type": "array",
@@ -198,6 +233,11 @@
                 "minimum": 1,
                 "maximum": 100000000
               },
+              "disagreement": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 50
+              },
               "advantage": {
                 "type": "number",
                 "minimum": -25,
@@ -257,6 +297,11 @@
                 "type": "integer",
                 "minimum": 1,
                 "maximum": 100000000
+              },
+              "disagreement": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 50
               },
               "winRate": {
                 "type": "number",
