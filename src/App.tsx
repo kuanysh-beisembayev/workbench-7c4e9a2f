@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { emptyDraft, loadData, preferencesSchema, ranks, roles } from './data.ts';
-import type { Draft, Hero, Rank, Role, Statistics } from './data.ts';
+import { emptyDraft, loadData, preferencesSchema, savedDraftSchema, roles } from './data.ts';
+import type { Draft, Hero, Role, Statistics } from './data.ts';
 import { recommend } from './engine.ts';
 
 const roleNames: Record<Role, string> = { carry: 'Carry · 1', mid: 'Mid · 2', offlane: 'Offlane · 3', support: 'Support · 4', 'hard-support': 'Hard support · 5' };
-const STORAGE_KEY = 'draft-assistant-v2';
-const formatRank = (rank: Rank) => rank === 'all' ? 'All ranks' : rank[0]?.toUpperCase() + rank.slice(1);
+const STORAGE_KEY = 'draft-assistant-v3';
 type Target = { team: 'allies' | 'enemies'; index: number } | { team: 'bans' };
 
 function HeroImage({ hero, small = false }: { hero: Hero; small?: boolean }) {
@@ -19,10 +18,9 @@ export default function App() {
   const [heroes, setHeroes] = useState<Hero[]>([]);
   const [statistics, setStatistics] = useState<Statistics | null>(null);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
-  const [role, setRole] = useState<Role>('offlane');
-  const [rank, setRank] = useState<Rank>('all');
-  const [started, setStarted] = useState(false);
-  const [target, setTarget] = useState<Target>({ team: 'allies', index: 2 });
+  const [target, setTarget] = useState<Target>({ team: 'enemies', index: 0 });
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const pickerRef = useRef<HTMLDialogElement>(null);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
@@ -38,14 +36,13 @@ export default function App() {
       setHeroes(data.heroes); setStatistics(data.statistics); setError('');
       try {
         const stored: unknown = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null');
-        const parsed = preferencesSchema.safeParse(stored);
-        if (parsed.success) {
+        const current = savedDraftSchema.safeParse(stored);
+        const legacy = current.success ? null : preferencesSchema.safeParse(JSON.parse(localStorage.getItem('draft-assistant-v2') ?? 'null'));
+        const saved = current.success ? current.data.draft : legacy?.success ? legacy.data.draft : null;
+        if (saved) {
           const ids = new Set(data.heroes.map(hero => hero.id));
-          const used = [...parsed.data.draft.allies, ...parsed.data.draft.enemies, ...parsed.data.draft.bans];
-          if (used.every(id => id === null || ids.has(id))) {
-            setDraft(parsed.data.draft); setRole(parsed.data.role); setRank(parsed.data.rank);
-            setStarted(parsed.data.started); setTarget({ team: 'allies', index: roles.indexOf(parsed.data.role) });
-          }
+          const used = [...saved.allies, ...saved.enemies, ...saved.bans];
+          if (used.every(id => id === null || ids.has(id))) setDraft(saved);
         }
       } catch { /* Browser storage is optional. */ }
       setRestored(true);
@@ -55,20 +52,26 @@ export default function App() {
 
   useEffect(() => {
     if (!restored) return;
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 2, started, role, rank, draft })); }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 3, draft })); }
     catch { /* The draft still works when browser storage is unavailable. */ }
-  }, [draft, role, rank, restored, started]);
+  }, [draft, restored]);
+
+  useEffect(() => {
+    if (pickerOpen) pickerRef.current?.showModal();
+    else pickerRef.current?.close();
+  }, [pickerOpen]);
 
   const unavailable = useMemo(() => new Set([...draft.allies, ...draft.enemies, ...draft.bans]), [draft]);
   const query = search.trim().toLowerCase();
-  const results = useMemo(() => query ? heroes.filter(hero => [hero.name, ...hero.aliases].some(name => name.toLowerCase().includes(query))) : [], [heroes, query]);
-  const suggestions = useMemo(() => statistics && !statistics.isDemo ? recommend(heroes, statistics, draft, role, rank) : [], [heroes, statistics, draft, role, rank]);
-  const ownPosition = roles.indexOf(role);
+  const results = useMemo(() => query ? heroes.filter(hero => [hero.name, ...hero.aliases].some(name => name.toLowerCase().includes(query))).sort((a, b) => Number([b.name.toLowerCase(), ...b.aliases].includes(query)) - Number([a.name.toLowerCase(), ...a.aliases].includes(query))) : [], [heroes, query]);
+  const suggestionsByRole = useMemo(() => roles.map(role => ({
+    role, suggestions: statistics && !statistics.isDemo ? recommend(heroes, statistics, draft, role, 'all') : [],
+  })), [heroes, statistics, draft]);
   const targetRole = target.team === 'allies' ? roles[target.index] : undefined;
-  const targetLabel = target.team === 'bans' ? 'Bans' : targetRole ? `${roleNames[targetRole]}${target.index === ownPosition ? ' · You' : ''}` : `Enemy team · Slot ${target.team === 'enemies' ? target.index + 1 : 1}`;
+  const targetLabel = target.team === 'bans' ? 'Bans' : targetRole ? roleNames[targetRole] : `Enemy team · Slot ${target.team === 'enemies' ? target.index + 1 : 1}`;
 
   function selectTarget(next: Target) {
-    setTarget(next); searchRef.current?.focus();
+    setTarget(next); setSearch(''); setPickerOpen(true);
   }
 
   function selectHero(hero: Hero) {
@@ -80,55 +83,40 @@ export default function App() {
       return next;
     });
     setSearch(''); setStatus(`${hero.name} ${target.team === 'bans' ? 'banned' : 'selected'}.`);
-    searchRef.current?.focus();
+    setPickerOpen(false);
+  }
+
+  function removeCurrent() {
+    if (target.team !== 'bans') removeHero(target.team, target.index);
   }
 
   function removeHero(team: 'allies' | 'enemies', index: number) {
     setDraft(previous => ({ ...previous, [team]: previous[team].map((id, i) => i === index ? null : id) }));
-    selectTarget({ team, index });
+    setPickerOpen(false);
   }
-
-  if (!started) return <div className="setup-shell"><form className="setup-form" onSubmit={event => {
-    event.preventDefault();
-    if (rank === 'all' || !restored) return;
-    setTarget({ team: 'allies', index: ownPosition }); setStarted(true);
-  }}>
-    <label className="setup-field">Your position<select value={role} onChange={event => { const next = roles.find(value => value === event.target.value); if (next) setRole(next); }}>{roles.map(value => <option key={value} value={value}>{roleNames[value]}</option>)}</select></label>
-    <label className="setup-field">Your rank<select value={rank} onChange={event => { const next = ranks.find(value => value === event.target.value); if (next) setRank(next); }}><option value="all" disabled>Select your rank</option>{ranks.filter(value => value !== 'all').map(value => <option key={value} value={value}>{formatRank(value)}</option>)}</select></label>
-    {error && <div className="error" role="alert"><span>{error}</span><button type="button" onClick={() => { setError(''); setRefresh(value => value + 1); }}>Reload data</button></div>}
-    <button className="start-draft" type="submit" disabled={rank === 'all' || !restored}>{restored ? 'Start draft' : 'Loading heroes…'}<span aria-hidden="true">→</span></button>
-  </form></div>;
 
   return <div className="app-shell">
     <header className="toolbar" aria-label="Draft settings">
-      <div className="preferences">
-        <span className="locked-setting" aria-label={`Your position: ${roleNames[role]}`}>{roleNames[role]}</span>
-        <span className="locked-setting" aria-label={`Your rank: ${formatRank(rank)}`}>{formatRank(rank)}</span>
-      </div>
-      <div className="toolbar-actions">
-        <button className="new-draft" onClick={() => { setDraft(emptyDraft()); setSearch(''); setStarted(false); setTarget({ team: 'allies', index: ownPosition }); setStatus('New draft started.'); }}>New draft</button>
-      </div>
+      <h1>Draft</h1>
+      <button className="new-draft" disabled={!restored} onClick={() => { setDraft(emptyDraft()); setSearch(''); setPickerOpen(false); setTarget({ team: 'enemies', index: 0 }); setStatus('Draft cleared.'); }}>New draft</button>
     </header>
 
     {error && <div className="error" role="alert"><span>{error}</span><button onClick={() => { setError(''); setRefresh(value => value + 1); }}>Reload data</button></div>}
 
+    <main className="workspace">
+    <div className="draft-panel">
     <section className="draft" aria-label="Draft">
-      {(['allies', 'enemies'] as const).map(team => <section key={team} className={`team ${team}`} aria-label={team === 'allies' ? 'Your team' : 'Enemy team'}>
-        <h2>{team === 'allies' ? 'Your team' : 'Enemy team'}<span>{draft[team].filter(id => id !== null).length} / 5</span></h2>
+      {(['enemies', 'allies'] as const).map(team => <section key={team} className={`team ${team}`} aria-label={team === 'allies' ? 'Your team' : 'Enemy team'}>
+        <h2><span className="team-title">{team === 'allies' ? 'Your team' : 'Enemy team'}</span><span>{draft[team].filter(id => id !== null).length} / 5</span></h2>
         <div className="slots">{draft[team].map((id, index) => {
           const hero = id === null ? undefined : heroById.get(id);
-          const selected = target.team === team && target.index === index;
-          const own = team === 'allies' && index === ownPosition;
           const positionRole = team === 'allies' ? roles[index] : undefined;
-          return <div className={`slot-wrap${selected ? ' selected' : ''}`} key={index}>
-            <button className={`slot${hero ? ' filled' : ''}`} aria-pressed={selected} aria-label={`${positionRole ? `Your team, ${roleNames[positionRole]}` : `Enemy team, slot ${index + 1}`}${own ? ', your pick' : ''}${hero ? `, ${hero.name}` : ', empty'}`} onClick={() => selectTarget({ team, index })}>
-              {positionRole && <span className="slot-position">{index + 1} · {roleNames[positionRole].split(' · ')[0]}</span>}
-              {hero ? <HeroImage key={hero.id} hero={hero} /> : <span className="empty-slot" aria-hidden="true">+</span>}
-              <span className="slot-name">{hero?.name ?? (own ? 'Your pick' : 'Empty')}</span>
-              {own && hero && <span className="own-label">You</span>}
-            </button>
-            {hero && <button className="remove-hero" aria-label={`Remove ${hero.name}`} onClick={() => removeHero(team, index)}>×</button>}
-          </div>;
+          const content = <>
+            <span className="slot-art">{hero ? <HeroImage key={hero.id} hero={hero} /> : <span className="empty-slot" aria-hidden="true">+</span>}</span>
+            <span className="slot-name">{hero?.name ?? 'Add hero'}</span>
+            {positionRole && <span className="slot-position">{index + 1} · {roleNames[positionRole].split(' · ')[0]}</span>}
+          </>;
+          return <button className={`slot${hero ? ' filled' : ''}`} key={index} disabled={!restored} aria-label={`${positionRole ? `Your team, ${roleNames[positionRole]}` : `Enemy team, slot ${index + 1}`}${hero ? `, ${hero.name}` : ', empty'}`} onClick={() => selectTarget({ team, index })}>{content}</button>;
         })}</div>
       </section>)}
     </section>
@@ -136,26 +124,33 @@ export default function App() {
     <section className="bans" aria-label="Banned heroes"><span className="section-label">Bans</span><div className="ban-list">{draft.bans.map(id => {
       const hero = heroById.get(id);
       return hero && <button key={id} className="ban-chip" aria-label={`Remove ban: ${hero.name}`} onClick={() => setDraft(previous => ({ ...previous, bans: previous.bans.filter(value => value !== id) }))}><HeroImage hero={hero} small /><span>{hero.name}</span><span aria-hidden="true">×</span></button>;
-    })}</div><button className="add-ban" aria-pressed={target.team === 'bans'} onClick={() => selectTarget({ team: 'bans' })}>+ Add ban</button></section>
+    })}</div><button className="add-ban" onClick={() => selectTarget({ team: 'bans' })}>+ Add ban</button></section>
 
-    <main>
-      <section className="hero-picker" aria-label="Hero search">
-        <div className="search-bar"><span aria-hidden="true">⌕</span><input ref={searchRef} type="search" aria-label="Search heroes" placeholder="Search heroes…" value={search} onChange={event => setSearch(event.target.value)} autoComplete="off" onKeyDown={event => { const first = results.find(hero => !unavailable.has(hero.id)); if (event.key === 'Enter' && first) { event.preventDefault(); selectHero(first); } if (event.key === 'Escape') setSearch(''); }} /><kbd>↵</kbd></div>
-        <div className="search-meta"><span>Adding to <strong>{targetLabel}</strong></span>{query && <span>{results.length} found</span>}</div>
-        {query && <div className="hero-grid" aria-label="Search results">{results.map(hero => <button className="hero-card" key={hero.id} disabled={unavailable.has(hero.id)} onClick={() => selectHero(hero)}><HeroImage hero={hero} /><span>{hero.name}</span>{unavailable.has(hero.id) && <small>Unavailable</small>}</button>)}</div>}
-        {query && results.length === 0 && <p className="empty-message">No heroes found. Try another name.</p>}
-        <div className="sr-only" role="status">{status}</div>
-      </section>
-
-      <section className="suggestions" aria-label="Suggested picks">
-        <div className="suggestions-heading"><h1>Suggested picks</h1></div>
+    </div>
+      <section className="recommendations" aria-label="Recommendations">
+        <div className="recommendations-heading"><h2>Suggested picks</h2><span>{draft.enemies.some(id => id !== null) ? 'Draft picks' : 'Role meta'}</span></div>
         {!statistics && !error && <p className="empty-message">Loading statistics…</p>}
-        {statistics && suggestions.length === 0 && <p className="empty-message">No statistics yet.</p>}
-        <div className="suggestion-list">{suggestions.map((suggestion, index) => <article key={suggestion.hero.id} className="suggestion">
-          <div className="suggestion-row"><span className="position">{index + 1}</span><HeroImage hero={suggestion.hero} /><div className="suggestion-name"><h2>{suggestion.hero.name}</h2></div></div>
-        </article>)}</div>
+        <div className="role-suggestions">{suggestionsByRole.map(({role, suggestions}) => <section className="suggestions" key={role} aria-label={`${roleNames[role]} suggestions`}>
+          <div className="suggestions-heading"><h3><span className="role-number">{roles.indexOf(role) + 1}</span>{roleNames[role].split(' · ')[0]}</h3></div>
+          {statistics && suggestions.length === 0 && <p className="empty-message">Not enough matchup data.</p>}
+          <div className="suggestion-list">{suggestions.map((suggestion, index) => <article key={suggestion.hero.id} className="suggestion">
+            <span className="position">{index + 1}</span><HeroImage hero={suggestion.hero} /><h4>{suggestion.hero.name}</h4>
+          </article>)}</div>
+        </section>)}</div>
       </section>
     </main>
 
+    <dialog ref={pickerRef} className="hero-picker" aria-labelledby="picker-title" onCancel={() => setPickerOpen(false)} onClose={() => setPickerOpen(false)} onClick={event => { if (event.target === event.currentTarget) { const box = event.currentTarget.getBoundingClientRect(); if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) setPickerOpen(false); } }}>
+      <div className="picker-header"><h2 id="picker-title">{targetLabel}</h2><button className="close-picker" aria-label="Close hero search" onClick={() => setPickerOpen(false)}>×</button></div>
+      <section aria-label="Hero search">
+        <div className="search-bar"><span aria-hidden="true">⌕</span><input ref={searchRef} autoFocus type="search" enterKeyHint="search" aria-label="Search heroes" placeholder="Search heroes…" value={search} onChange={event => setSearch(event.target.value)} autoComplete="off" onKeyDown={event => { const first = results.find(hero => !unavailable.has(hero.id)); if (event.key === 'Enter' && first) { event.preventDefault(); selectHero(first); } if (event.key === 'Escape') setSearch(''); }} /></div>
+        {target.team !== 'bans' && draft[target.team][target.index] !== null && <button className="remove-selection" onClick={removeCurrent}>Remove hero</button>}
+        {!query && <p className="empty-message">Search by name or abbreviation</p>}
+        {query && <div className="hero-grid" aria-label="Search results">{results.map(hero => <button className="hero-card" key={hero.id} disabled={unavailable.has(hero.id)} onClick={() => selectHero(hero)}><HeroImage hero={hero} /><span>{hero.name}</span>{unavailable.has(hero.id) && <small>Unavailable</small>}</button>)}</div>}
+        {query && results.length === 0 && <p className="empty-message">No heroes found. Try another name.</p>}
+      </section>
+
+    </dialog>
+    <div className="sr-only" role="status">{status}</div>
   </div>;
 }

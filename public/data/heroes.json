@@ -19,7 +19,9 @@
     "id": 68,
     "name": "Ancient Apparition",
     "slug": "ancient_apparition",
-    "aliases": [],
+    "aliases": [
+      "aa"
+    ],
     "tags": []
   },
   {
@@ -28,7 +30,9 @@
     "slug": "antimage",
     "aliases": [
       "AM",
-      "Anti Mage"
+      "Anti Mage",
+      "am",
+      "antimage"
     ],
     "tags": []
   },
@@ -36,7 +40,9 @@
     "id": 113,
     "name": "Arc Warden",
     "slug": "arc_warden",
-    "aliases": [],
+    "aliases": [
+      "aw"
+    ],
     "tags": []
   },
   {
@@ -83,7 +89,9 @@
     "id": 62,
     "name": "Bounty Hunter",
     "slug": "bounty_hunter",
-    "aliases": [],
+    "aliases": [
+      "bh"
+    ],
     "tags": []
   },
   {
@@ -97,7 +105,9 @@
     "id": 99,
     "name": "Bristleback",
     "slug": "bristleback",
-    "aliases": [],
+    "aliases": [
+      "bb"
+    ],
     "tags": [
       "frontline"
     ]
@@ -114,7 +124,9 @@
     "name": "Centaur Warrunner",
     "slug": "centaur",
     "aliases": [
-      "Centaur"
+      "Centaur",
+      "centaur",
+      "cw"
     ],
     "tags": [
       "stun",
@@ -125,7 +137,9 @@
     "id": 81,
     "name": "Chaos Knight",
     "slug": "chaos_knight",
-    "aliases": [],
+    "aliases": [
+      "ck"
+    ],
     "tags": [
       "stun",
       "frontline"
@@ -152,7 +166,8 @@
     "name": "Clockwerk",
     "slug": "rattletrap",
     "aliases": [
-      "Clockwerk"
+      "Clockwerk",
+      "cw"
     ],
     "tags": []
   },
@@ -161,7 +176,8 @@
     "name": "Crystal Maiden",
     "slug": "crystal_maiden",
     "aliases": [
-      "CM"
+      "CM",
+      "cm"
     ],
     "tags": [
       "stun"
@@ -171,14 +187,18 @@
     "id": 55,
     "name": "Dark Seer",
     "slug": "dark_seer",
-    "aliases": [],
+    "aliases": [
+      "ds"
+    ],
     "tags": []
   },
   {
     "id": 119,
     "name": "Dark Willow",
     "slug": "dark_willow",
-    "aliases": [],
+    "aliases": [
+      "dw"
+    ],
     "tags": []
   },
   {
@@ -201,7 +221,9 @@
     "id": 43,
     "name": "Death Prophet",
     "slug": "death_prophet",
-    "aliases": [],
+    "aliases": [
+      "dp"
+    ],
     "tags": [
       "tower-damage"
     ]
@@ -226,7 +248,9 @@
     "id": 49,
     "name": "Dragon Knight",
     "slug": "dragon_knight",
-    "aliases": [],
+    "aliases": [
+      "dk"
+    ],
     "tags": [
       "stun",
       "frontline",
@@ -237,14 +261,18 @@
     "id": 6,
     "name": "Drow Ranger",
     "slug": "drow_ranger",
-    "aliases": [],
+    "aliases": [
+      "dr"
+    ],
     "tags": []
   },
   {
     "id": 107,
     "name": "Earth Spirit",
     "slug": "earth_spirit",
-    "aliases": [],
+    "aliases": [
+      "es"
+    ],
     "tags": []
   },
   {
@@ -260,14 +288,18 @@
     "id": 103,
     "name": "Elder Titan",
     "slug": "elder_titan",
-    "aliases": [],
+    "aliases": [
+      "et"
+    ],
     "tags": []
   },
   {
     "id": 106,
     "name": "Ember Spirit",
     "slug": "ember_spirit",
-    "aliases": [],
+    "aliases": [
+      "es"
+    ],
     "tags": []
   },
   {
@@ -290,7 +322,9 @@
     "id": 41,
     "name": "Faceless Void",
     "slug": "faceless_void",
-    "aliases": [],
+    "aliases": [
+      "fv"
+    ],
     "tags": [
       "stun"
     ]
@@ -361,7 +395,8 @@
     "name": "Keeper of the Light",
     "slug": "keeper_of_the_light",
     "aliases": [
-      "KOTL"
+      "KOTL",
+      "kotl"
     ],
     "tags": []
   },
@@ -390,7 +425,9 @@
     "id": 104,
     "name": "Legion Commander",
     "slug": "legion_commander",
-    "aliases": [],
+    "aliases": [
+      "lc"
+    ],
     "tags": []
   },
   {
@@ -415,7 +452,9 @@
     "slug": "life_stealer",
     "aliases": [
       "LS",
-      "Lifestealer"
+      "Lifestealer",
+      "ls",
+      "naix"
     ],
     "tags": []
   },
@@ -441,7 +480,9 @@
     "id": 80,
     "name": "Lone Druid",
     "slug": "lone_druid",
-    "aliases": [],
+    "aliases": [
+      "ld"
+    ],
     "tags": [
       "tower-damage"
     ]
@@ -467,7 +508,8 @@
     "name": "Magnus",
     "slug": "magnataur",
     "aliases": [
-      "Magnus"
+      "Magnus",
+      "mag"
     ],
     "tags": [
       "stun"
@@ -515,7 +557,9 @@
     "id": 114,
     "name": "Monkey King",
     "slug": "monkey_king",
-    "aliases": [],
+    "aliases": [
+      "mk"
+    ],
     "tags": []
   },
   {
@@ -537,7 +581,8 @@
     "name": "Naga Siren",
     "slug": "naga_siren",
     "aliases": [
-      "Naga"
+      "Naga",
+      "ns"
     ],
     "tags": []
   },
@@ -547,7 +592,9 @@
     "slug": "furion",
     "aliases": [
       "NP",
-      "Nature Prophet"
+      "Nature Prophet",
+      "furion",
+      "np"
     ],
     "tags": [
       "tower-damage"
@@ -557,28 +604,36 @@
     "id": 36,
     "name": "Necrophos",
     "slug": "necrolyte",
-    "aliases": [],
+    "aliases": [
+      "necro"
+    ],
     "tags": []
   },
   {
     "id": 60,
     "name": "Night Stalker",
     "slug": "night_stalker",
-    "aliases": [],
+    "aliases": [
+      "ns"
+    ],
     "tags": []
   },
   {
     "id": 88,
     "name": "Nyx Assassin",
     "slug": "nyx_assassin",
-    "aliases": [],
+    "aliases": [
+      "na"
+    ],
     "tags": []
   },
   {
     "id": 84,
     "name": "Ogre Magi",
     "slug": "ogre_magi",
-    "aliases": [],
+    "aliases": [
+      "om"
+    ],
     "tags": [
       "stun"
     ]
@@ -607,7 +662,8 @@
     "slug": "obsidian_destroyer",
     "aliases": [
       "OD",
-      "Outworld Destroyer"
+      "Outworld Destroyer",
+      "od"
     ],
     "tags": []
   },
@@ -623,7 +679,8 @@
     "name": "Phantom Assassin",
     "slug": "phantom_assassin",
     "aliases": [
-      "PA"
+      "PA",
+      "pa"
     ],
     "tags": []
   },
@@ -631,7 +688,9 @@
     "id": 12,
     "name": "Phantom Lancer",
     "slug": "phantom_lancer",
-    "aliases": [],
+    "aliases": [
+      "pl"
+    ],
     "tags": []
   },
   {
@@ -645,7 +704,9 @@
     "id": 137,
     "name": "Primal Beast",
     "slug": "primal_beast",
-    "aliases": [],
+    "aliases": [
+      "pb"
+    ],
     "tags": [
       "stun",
       "frontline"
@@ -683,7 +744,8 @@
     "slug": "queenofpain",
     "aliases": [
       "QOP",
-      "Queen of Pain"
+      "Queen of Pain",
+      "qop"
     ],
     "tags": []
   },
@@ -706,7 +768,8 @@
     "name": "Ring Master",
     "slug": "ringmaster",
     "aliases": [
-      "Ringmaster"
+      "Ringmaster",
+      "rm"
     ],
     "tags": []
   },
@@ -721,7 +784,9 @@
     "id": 16,
     "name": "Sand King",
     "slug": "sand_king",
-    "aliases": [],
+    "aliases": [
+      "sk"
+    ],
     "tags": [
       "stun",
       "frontline"
@@ -731,7 +796,9 @@
     "id": 79,
     "name": "Shadow Demon",
     "slug": "shadow_demon",
-    "aliases": [],
+    "aliases": [
+      "sd"
+    ],
     "tags": [
       "save"
     ]
@@ -742,7 +809,9 @@
     "slug": "nevermore",
     "aliases": [
       "SF",
-      "Shadow Fiend"
+      "Shadow Fiend",
+      "nevermore",
+      "sf"
     ],
     "tags": []
   },
@@ -750,7 +819,9 @@
     "id": 27,
     "name": "Shadow Shaman",
     "slug": "shadow_shaman",
-    "aliases": [],
+    "aliases": [
+      "ss"
+    ],
     "tags": [
       "stun",
       "tower-damage"
@@ -767,7 +838,9 @@
     "id": 101,
     "name": "Skywrath Mage",
     "slug": "skywrath_mage",
-    "aliases": [],
+    "aliases": [
+      "sm"
+    ],
     "tags": []
   },
   {
@@ -812,7 +885,9 @@
     "id": 71,
     "name": "Spirit Breaker",
     "slug": "spirit_breaker",
-    "aliases": [],
+    "aliases": [
+      "sb"
+    ],
     "tags": [
       "stun",
       "frontline"
@@ -822,7 +897,9 @@
     "id": 17,
     "name": "Storm Spirit",
     "slug": "storm_spirit",
-    "aliases": [],
+    "aliases": [
+      "ss"
+    ],
     "tags": []
   },
   {
@@ -847,7 +924,8 @@
     "name": "Templar Assassin",
     "slug": "templar_assassin",
     "aliases": [
-      "TA"
+      "TA",
+      "ta"
     ],
     "tags": []
   },
@@ -876,7 +954,8 @@
     "slug": "shredder",
     "aliases": [
       "Timber",
-      "Timbersaw"
+      "Timbersaw",
+      "timber"
     ],
     "tags": []
   },
@@ -901,7 +980,9 @@
     "name": "Treant Protector",
     "slug": "treant",
     "aliases": [
-      "Treant"
+      "Treant",
+      "tp",
+      "tree"
     ],
     "tags": [
       "save"
@@ -911,7 +992,9 @@
     "id": 95,
     "name": "Troll Warlord",
     "slug": "troll_warlord",
-    "aliases": [],
+    "aliases": [
+      "tw"
+    ],
     "tags": []
   },
   {
@@ -926,8 +1009,9 @@
     "name": "Underlord",
     "slug": "abyssal_underlord",
     "aliases": [
+      "Pitlord",
       "Underlord",
-      "Pitlord"
+      "pit lord"
     ],
     "tags": [
       "frontline"
@@ -953,7 +1037,9 @@
     "slug": "vengefulspirit",
     "aliases": [
       "VS",
-      "Vengeful Spirit"
+      "Vengeful Spirit",
+      "venge",
+      "vs"
     ],
     "tags": []
   },
@@ -982,7 +1068,9 @@
     "id": 126,
     "name": "Void Spirit",
     "slug": "void_spirit",
-    "aliases": [],
+    "aliases": [
+      "vs"
+    ],
     "tags": []
   },
   {
@@ -1005,7 +1093,9 @@
     "slug": "windrunner",
     "aliases": [
       "WR",
-      "Windranger"
+      "Windranger",
+      "windrunner",
+      "wr"
     ],
     "tags": []
   },
@@ -1013,7 +1103,9 @@
     "id": 112,
     "name": "Winter Wyvern",
     "slug": "winter_wyvern",
-    "aliases": [],
+    "aliases": [
+      "ww"
+    ],
     "tags": [
       "save"
     ]
@@ -1022,7 +1114,9 @@
     "id": 30,
     "name": "Witch Doctor",
     "slug": "witch_doctor",
-    "aliases": [],
+    "aliases": [
+      "wd"
+    ],
     "tags": [
       "stun"
     ]
@@ -1033,7 +1127,9 @@
     "slug": "skeleton_king",
     "aliases": [
       "WK",
-      "Wraith King"
+      "Wraith King",
+      "skeleton king",
+      "wk"
     ],
     "tags": [
       "stun",
@@ -1045,7 +1141,8 @@
     "name": "Zeus",
     "slug": "zuus",
     "aliases": [
-      "Zeus"
+      "Zeus",
+      "zuus"
     ],
     "tags": []
   }

@@ -20,26 +20,43 @@ export function recommend(heroes: Hero[], stats: Statistics, draft: Draft, role:
   const ownPosition = roles.indexOf(role);
   const allies = draft.allies.filter((id, index): id is number => id !== null && index !== ownPosition);
   const enemies = draft.enemies.filter((id): id is number => id !== null);
-  // Allied slots map to positions 1–5. Do not count the user's current pick as a teammate.
+  // Score replacements without treating the current position as another teammate.
   const otherAllies = allies;
   const teamTags = new Set(otherAllies.flatMap(id => heroById.get(id)?.tags ?? []));
   const results: Recommendation[] = [];
+  const pairIndex = new Map<number, Statistics['matchups']>();
+  const selected = new Set([...allies, ...enemies]);
+  for (const pair of stats.matchups) {
+    if ((pair.role && pair.role !== role) || !selected.has(pair.otherHeroId)) continue;
+    const pairs = pairIndex.get(pair.heroId) ?? [];
+    pairs.push(pair); pairIndex.set(pair.heroId, pairs);
+  }
 
   for (const hero of heroes) {
     if (unavailable.has(hero.id)) continue;
     const rows = stats.roleStats.filter(row => row.heroId === hero.id && row.role === role);
     const row = rows.find(item => item.rank === rank) ?? rows.find(item => item.rank === 'all');
-    if (!row) continue;
+    if (!row || row.matches < 500) continue;
 
     // Shrink small samples towards a neutral 50% baseline.
     const winRate = 'wins' in row ? row.wins / row.matches : row.winRate;
     const base = (winRate - 0.5) * row.matches / (row.matches + 500);
-    const applicable = stats.matchups.filter(pair => pair.heroId === hero.id &&
-      (pair.kind === 'enemy' ? enemies : allies).includes(pair.otherHeroId));
-    const effects = applicable.map(pair => ({
-      ...pair,
-      effect: (pair.advantage / 100) * pair.matches / (pair.matches + 300),
-    }));
+    const applicable = pairIndex.get(hero.id) ?? [];
+    const effects: { kind: 'enemy' | 'ally'; otherHeroId: number; effect: number }[] = [];
+    for (const kind of ['enemy', 'ally'] as const) {
+      for (const otherHeroId of kind === 'enemy' ? enemies : allies) {
+        const otherRole = kind === 'ally' ? roles[draft.allies.indexOf(otherHeroId)] : undefined;
+        const pairs = applicable.filter(pair => pair.kind === kind && pair.otherHeroId === otherHeroId &&
+          (!otherRole || !pair.otherRole || pair.otherRole === otherRole));
+        const matches = pairs.reduce((sum, pair) => sum + pair.matches, 0);
+        if (matches < 100) continue;
+        const delta = pairs.reduce((sum, pair) => sum + pair.matches *
+          ('advantage' in pair ? pair.advantage / 100 : pair.winRate - winRate), 0) / matches;
+        effects.push({ kind, otherHeroId, effect: delta * matches / (matches + 300) });
+      }
+    }
+    // Missing enemy data must not masquerade as a neutral matchup.
+    if (effects.filter(pair => pair.kind === 'enemy').length !== enemies.length) continue;
     const enemyEffect = effects.filter(pair => pair.kind === 'enemy').reduce((sum, pair) => sum + pair.effect, 0) / Math.max(1, enemies.length);
     const allyEffect = effects.filter(pair => pair.kind === 'ally').reduce((sum, pair) => sum + pair.effect, 0) / Math.max(1, allies.length);
     const fills = otherAllies.length >= 2 ? hero.tags.filter(tag => !teamTags.has(tag)).slice(0, 2) : [];

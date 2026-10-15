@@ -32,7 +32,7 @@ This is an illustrative example, not real match data:
 - `scope` (optional): the source population and coverage limits.
 - `sourceUrls` (optional): the original public data pages.
 
-Do not mix patches or incompatible sources in one file. If role and rank statistics are unavailable, omit those records.
+Use compatible source filters where available. Document every unknown time window or cohort difference in `scope`. Omit unavailable records.
 
 ## Role statistics
 
@@ -46,9 +46,9 @@ Allowed ranks: `all`, `herald`, `guardian`, `crusader`, `archon`, `legend`, `anc
 
 Use `all` when the source has no rank breakdown. This means unsegmented within the documented source population, not necessarily every Dota 2 rank. Do not relabel professional-match statistics as a specific ranked bracket. A hero, role, and rank combination must appear only once.
 
-The player selects a specific rank before the draft starts. The engine uses that rank first. It falls back only to an `all` record and labels that fallback. It never substitutes another rank. Heroes without applicable role statistics cannot become recommendations, but remain available for draft entry.
+The interface evaluates all five positions using `rank: "all"`. Rank-specific rows remain supported by the engine for future use. Heroes without applicable role statistics remain searchable but cannot become recommendations.
 
-Allied slots are positions 1–5 in order. The player's position determines their slot. The engine excludes that slot when calculating allied combinations and team needs. Current pair statistics apply across the other allied positions; role-specific lane combinations would require additional data.
+Allied slots correspond to positions 1–5. When scoring a position, the engine excludes its current occupant from teammate effects. That occupant remains unavailable as a candidate. Other allied positions determine which synergy rows apply.
 
 ## Hero pairs
 
@@ -56,29 +56,34 @@ Allied slots are positions 1–5 in order. The player's position determines thei
 - `otherHeroId`: the selected allied or enemy hero.
 - `kind`: `enemy` or `ally`.
 - `matches`: the supporting sample size.
-- `advantage`: adjusted advantage in percentage points, between `-25` and `25`.
+- `role` (optional): the candidate position.
+- `otherRole` (optional): the other hero's position.
+- Exactly one of `advantage` or `winRate`.
 
-For example, `2.5` means a positive adjusted advantage of 2.5 percentage points. It does **not** mean a 2.5% win rate or a 52.5% raw matchup win rate. These records are directional and currently apply across roles and ranks. The engine uses only explicitly supplied records.
+`advantage` is an adjusted advantage in percentage points, between `-25` and `25`. `winRate` is the published raw rate, from `0` to `1`. Do not convert a rounded rate to invented exact win counts. Records are directional. A candidate, candidate role, other hero, other role, and kind combination must be unique.
 
-Use adjusted statistics from a documented source or estimator. Raw matchup win rates include general hero strength and can double-count it. If adjusted data is unavailable, set `matchups` to `[]`. The app reports missing coverage instead of inventing results. Pair records must use the same patch as the role records.
+The current snapshot uses raw rates from Dota2ProTracker. Enemy positions are unknown, so the engine averages their role rows by match count. Allied positions are known, so it uses only matching or unspecified `otherRole` rows. Candidate role rows must match the evaluated position.
 
 ## Scoring
 
-The engine removes picks and bans, filters by role and rank coverage, and applies these terms:
+The engine removes picks and bans and requires at least 500 role matches per candidate. It shrinks role rates towards 50%:
 
 ```text
-role rate = wins / matches, or the supplied winRate
-base = (role rate - 0.5) * matches / (matches + 500)
-pair effect = (advantage / 100) * pair matches / (pair matches + 300)
-fit = clamp(50 + 300 * (base + 0.65 * average enemy effect
-                      + 0.40 * average allied effect + team needs), 1, 99)
+base = (role win rate - 0.5) * role matches / (role matches + 500)
+raw pair delta = pair win rate - role win rate
+adjusted pair delta = advantage / 100
+pair effect = weighted average delta * pair matches / (pair matches + 300)
+score = clamp(50 + 300 * (base + 0.65 * average enemy effect
+                        + 0.40 * average allied effect + team needs), 1, 99)
 ```
 
-Missing pair effects contribute zero. The averages use the complete selected enemy or ally count. This avoids amplifying one known matchup when other matchups are unknown.
+Pair rows below 30 matches are omitted from the snapshot. A selected hero needs at least 100 combined applicable pair matches. A candidate with missing enemy coverage is excluded. Missing allied coverage contributes zero. Empty enemy lists use zero enemy effect.
 
-Small samples move towards neutral. With at least two other allied picks, a missing team ability adds `0.006`, up to two abilities. Tags are manually maintained in `heroes.json`: `stun`, `frontline`, `tower-damage`, and `save`.
+With at least two other allies, each missing team ability adds `0.006`, up to two abilities. Tags are maintained in `heroes.json`: `stun`, `frontline`, `tower-damage`, and `save`.
 
-Weights are transparent initial heuristics. They have not been validated as a win prediction model. Numerical scores and generated explanations are not displayed in the interface. This MVP does not infer lane assignments or model every five-hero interaction.
+Return up to five heroes per role, ordered by score, match count, and name. Empty drafts show role meta rather than a first-pick safety estimate. Incomplete evidence can produce fewer than five suggestions. The interface displays portraits and names only.
+
+These weights are initial heuristics. Raw rates remain affected by player selection and team composition. They are not causal counter measurements or calibrated win probabilities. The source cohort is 7000+ MMR. Role tables cover eight days under patch 7.41f; matchup windows are unspecified. Their compatibility has not been independently verified.
 
 ## Publish an update
 

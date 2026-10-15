@@ -35,14 +35,18 @@ const roleStatsSchema = z.union([
   z.object({ ...roleStatsIdentity, winRate: z.number().min(0).max(1) }).strict(),
 ]);
 
-const pairSchema = z.object({
+const pairIdentity = {
   heroId: z.number().int().positive(),
   otherHeroId: z.number().int().positive(),
+  role: z.enum(roles).optional(),
+  otherRole: z.enum(roles).optional(),
   kind: z.enum(['enemy', 'ally']),
   matches: z.number().int().min(1).max(100_000_000),
-  // Adjusted advantage, in percentage points; never a raw matchup win rate.
-  advantage: z.number().min(-25).max(25),
-}).refine(p => p.heroId !== p.otherHeroId, 'A hero cannot be its own matchup.');
+};
+const pairSchema = z.union([
+  z.object({ ...pairIdentity, advantage: z.number().min(-25).max(25) }).strict(),
+  z.object({ ...pairIdentity, winRate: z.number().min(0).max(1) }).strict(),
+]).refine(p => p.heroId !== p.otherHeroId, 'A hero cannot be its own matchup.');
 
 export const statisticsSchema = z.object({
   version: z.literal(1),
@@ -51,13 +55,13 @@ export const statisticsSchema = z.object({
   isDemo: z.boolean(),
   source: z.string().min(1).max(200),
   scope: z.string().max(200).optional(),
-  sourceUrls: z.array(z.url()).max(20).optional(),
+  sourceUrls: z.array(z.url()).max(300).optional(),
   roleStats: z.array(roleStatsSchema).max(20_000),
-  matchups: z.array(pairSchema).max(50_000),
+  matchups: z.array(pairSchema).max(200_000),
 }).superRefine((data, ctx) => {
   const keys = data.roleStats.map(s => `${s.heroId}:${s.role}:${s.rank}`);
   if (new Set(keys).size !== keys.length) ctx.addIssue({ code: 'custom', message: 'Duplicate hero, role, and rank statistics.' });
-  const pairs = data.matchups.map(p => `${p.heroId}:${p.otherHeroId}:${p.kind}`);
+  const pairs = data.matchups.map(p => `${p.heroId}:${p.role ?? "all"}:${p.otherHeroId}:${p.otherRole ?? "all"}:${p.kind}`);
   if (new Set(pairs).size !== pairs.length) ctx.addIssue({ code: 'custom', message: 'Duplicate matchup statistics.' });
 });
 export type Statistics = z.infer<typeof statisticsSchema>;
@@ -81,6 +85,8 @@ export const draftSchema = z.object({
   const used = [...draft.allies, ...draft.enemies, ...draft.bans].filter(id => id !== null);
   return new Set(used).size === used.length;
 }, 'A hero can appear only once in a draft.');
+
+export const savedDraftSchema = z.object({ version: z.literal(3), draft: draftSchema });
 
 export const preferencesSchema = z.object({
   version: z.literal(2),
