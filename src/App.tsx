@@ -149,7 +149,9 @@ export default function App() {
           onClick={() => setActiveRole(role)} onKeyDown={event => {
             const next = event.key === 'ArrowRight' ? (index + 1) % roles.length : event.key === 'ArrowLeft' ? (index + roles.length - 1) % roles.length : event.key === 'Home' ? 0 : event.key === 'End' ? roles.length - 1 : null;
             if (next === null) return;
-            event.preventDefault(); setActiveRole(roles[next]); roleTabRefs.current[next]?.focus();
+            const nextRole = roles[next];
+            if (!nextRole) return;
+            event.preventDefault(); setActiveRole(nextRole); roleTabRefs.current[next]?.focus();
           }}><span>{index + 1}</span><span>{role === 'hard-support' ? 'Hard sup.' : roleNames[role].split(' · ')[0]}</span></button>)}</div>}
         <div className="role-suggestions">{suggestionsByRole.map(({role, suggestions}) => <section className="suggestions" key={role}
           id={`role-panel-${role}`} role={isMobile ? 'tabpanel' : undefined} hidden={isMobile && activeRole !== role}
