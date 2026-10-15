@@ -70,3 +70,13 @@ test('the user pick is excluded from ally scoring in the selected position', () 
   assert.deepEqual(actual.map(row => row.score), baseline.map(row => row.score));
   assert.ok(actual.every(row => row.coverage === 'Add picks for matchup suggestions'));
 });
+
+test('published win rates work without fabricated win counts', () => {
+  const stats = parseStatistics({ ...base, roleStats: [
+    { heroId: 1, role: 'offlane', rank: 'all', matches: 1000, winRate: 0.55 },
+  ] }, heroes);
+  const result = recommend(heroes, stats, emptyDraft(), 'offlane', 'all')[0];
+  assert.equal(result?.winRate, 0.55);
+  assert.equal(result?.score, recommend(heroes, base, emptyDraft(), 'offlane', 'all')[0]?.score);
+  assert.throws(() => parseStatistics({ ...base, roleStats: [{ heroId: 1, role: 'offlane', rank: 'all', matches: 1000, wins: 550, winRate: 0.55 }] }, heroes));
+});

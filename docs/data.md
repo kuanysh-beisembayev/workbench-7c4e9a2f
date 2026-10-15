@@ -29,18 +29,22 @@ This is an illustrative example, not real match data:
 - `updatedAt`: ISO 8601 timestamp with timezone, such as `2026-10-15T12:00:00Z`.
 - `isDemo`: set to `false` only when every statistic is real and verified.
 - `source`: the source name, URL, and any relevant filters.
+- `scope` (optional): the source population and coverage limits.
+- `sourceUrls` (optional): the original public data pages.
 
 Do not mix patches or incompatible sources in one file. If role and rank statistics are unavailable, omit those records.
 
 ## Role statistics
 
-Each record requires a hero ID, role, rank, match count, and win count. Find hero IDs in `heroes.json`. For example, Axe is `2`.
+Each record requires a hero ID, role, rank, match count, and either `wins` or `winRate`. Find hero IDs in `heroes.json`. For example, Axe is `2`.
+
+Use `wins` when exact counts are available. If a source publishes only a win rate, use `winRate` as a fraction between 0 and 1. For example, 52.7% becomes `0.527`. Do not supply both fields or manufacture exact wins from a rounded percentage.
 
 Allowed roles: `carry`, `mid`, `offlane`, `support`, `hard-support`.
 
 Allowed ranks: `all`, `herald`, `guardian`, `crusader`, `archon`, `legend`, `ancient`, `divine`, `immortal`.
 
-Use `all` for genuinely unsegmented data. Do not relabel professional-match statistics as a specific ranked bracket. A hero, role, and rank combination must appear only once.
+Use `all` when the source has no rank breakdown. This means unsegmented within the documented source population, not necessarily every Dota 2 rank. Do not relabel professional-match statistics as a specific ranked bracket. A hero, role, and rank combination must appear only once.
 
 The player selects a specific rank before the draft starts. The engine uses that rank first. It falls back only to an `all` record and labels that fallback. It never substitutes another rank. Heroes without applicable role statistics cannot become recommendations, but remain available for draft entry.
 
@@ -63,7 +67,8 @@ Use adjusted statistics from a documented source or estimator. Raw matchup win r
 The engine removes picks and bans, filters by role and rank coverage, and applies these terms:
 
 ```text
-base = (wins / matches - 0.5) * matches / (matches + 500)
+role rate = wins / matches, or the supplied winRate
+base = (role rate - 0.5) * matches / (matches + 500)
 pair effect = (advantage / 100) * pair matches / (pair matches + 300)
 fit = clamp(50 + 300 * (base + 0.65 * average enemy effect
                       + 0.40 * average allied effect + team needs), 1, 99)
@@ -73,7 +78,7 @@ Missing pair effects contribute zero. The averages use the complete selected ene
 
 Small samples move towards neutral. With at least two other allied picks, a missing team ability adds `0.006`, up to two abilities. Tags are manually maintained in `heroes.json`: `stun`, `frontline`, `tower-damage`, and `save`.
 
-Weights are transparent initial heuristics. They have not been validated as a win prediction model. The fit score is not a win probability. This MVP does not infer lane assignments or model every five-hero interaction.
+Weights are transparent initial heuristics. They have not been validated as a win prediction model. Numerical scores and generated explanations are not displayed in the interface. This MVP does not infer lane assignments or model every five-hero interaction.
 
 ## Publish an update
 

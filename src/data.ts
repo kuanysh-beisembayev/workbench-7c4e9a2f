@@ -22,13 +22,18 @@ export const catalogSchema = z.array(heroSchema).min(1).max(300).superRefine((he
   }
 });
 
-const roleStatsSchema = z.object({
+const roleStatsIdentity = {
   heroId: z.number().int().positive(),
   role: z.enum(roles),
   rank: z.enum(ranks),
   matches: z.number().int().min(1).max(100_000_000),
-  wins: z.number().int().min(0),
-}).refine(s => s.wins <= s.matches, 'Wins cannot exceed matches.');
+};
+const roleStatsSchema = z.union([
+  z.object({ ...roleStatsIdentity, wins: z.number().int().min(0) }).strict()
+    .refine(s => s.wins <= s.matches, 'Wins cannot exceed matches.'),
+  // Preserve a source's published win rate without fabricating exact win counts.
+  z.object({ ...roleStatsIdentity, winRate: z.number().min(0).max(1) }).strict(),
+]);
 
 const pairSchema = z.object({
   heroId: z.number().int().positive(),
@@ -45,6 +50,8 @@ export const statisticsSchema = z.object({
   updatedAt: z.iso.datetime(),
   isDemo: z.boolean(),
   source: z.string().min(1).max(200),
+  scope: z.string().max(200).optional(),
+  sourceUrls: z.array(z.url()).max(20).optional(),
   roleStats: z.array(roleStatsSchema).max(20_000),
   matchups: z.array(pairSchema).max(50_000),
 }).superRefine((data, ctx) => {

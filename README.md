@@ -2,7 +2,7 @@
 
 A minimal React app for your ranked Dota 2 draft. Select your position and rank before starting. They stay fixed for that draft. Enter picks and bans, then inspect five suggested heroes.
 
-Allied slots correspond to positions 1–5: carry, mid, offlane, support, and hard support. Your position is marked automatically. Enemy positions remain unknown. Suggestions show scores and expandable reasons without a separate pick button. Start a new draft to change your position or rank.
+Allied slots correspond to positions 1–5: carry, mid, offlane, support, and hard support. Your position is marked automatically. Enemy positions remain unknown. Suggestions show only hero portraits and names. Start a new draft to change your position or rank.
 
 The app runs entirely in the browser. It has no database, account system, LLM calls, or automatic statistics updates.
 
@@ -14,7 +14,11 @@ The app runs entirely in the browser. It has no database, account system, LLM ca
 
 Edit `public/data/statistics.json`, validate it, commit and push to `main`, then run `pnpm deploy`. The deployment publishes the updated file. There is no data upload control in the interface.
 
-**The initial statistics are fictional examples.** They demonstrate scoring and are clearly marked in the interface. Replace them with real statistics before using the suggestions in matches. Hero names and identifiers come from [OpenDota constants](https://github.com/odota/dotaconstants). Hero portraits load from Valve's Steam CDN. Dota 2 assets belong to Valve Corporation.
+The initial file is a manually transcribed [Dota2ProTracker](https://dota2protracker.com/meta) snapshot from 2026-10-15, patch 7.41f. It contains seven listed heroes per position from 7000+ MMR public matches. Published win rates are stored directly; exact win counts are not invented. The file lists the five source URLs.
+
+**Initial data limits:** no rank-specific statistics and no adjusted enemy or allied matchup statistics are available in this snapshot. Rank therefore falls back to the unsegmented source cohort. Picks and bans exclude unavailable heroes; allied picks can also affect simple team-ability heuristics. Enemy counter scoring needs matchup records added to the JSON file. The app never displays fictional statistics or a numerical fit score.
+
+Hero names and identifiers come from [OpenDota constants](https://github.com/odota/dotaconstants). Hero portraits load from Valve's Steam CDN. Dota 2 assets belong to Valve Corporation.
 
 See [the data guide](docs/data.md) for the exact format and scoring method.
 

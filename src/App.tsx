@@ -62,7 +62,7 @@ export default function App() {
   const unavailable = useMemo(() => new Set([...draft.allies, ...draft.enemies, ...draft.bans]), [draft]);
   const query = search.trim().toLowerCase();
   const results = useMemo(() => query ? heroes.filter(hero => [hero.name, ...hero.aliases].some(name => name.toLowerCase().includes(query))) : [], [heroes, query]);
-  const suggestions = useMemo(() => statistics ? recommend(heroes, statistics, draft, role, rank) : [], [heroes, statistics, draft, role, rank]);
+  const suggestions = useMemo(() => statistics && !statistics.isDemo ? recommend(heroes, statistics, draft, role, rank) : [], [heroes, statistics, draft, role, rank]);
   const ownPosition = roles.indexOf(role);
   const targetRole = target.team === 'allies' ? roles[target.index] : undefined;
   const targetLabel = target.team === 'bans' ? 'Bans' : targetRole ? `${roleNames[targetRole]}${target.index === ownPosition ? ' · You' : ''}` : `Enemy team · Slot ${target.team === 'enemies' ? target.index + 1 : 1}`;
@@ -93,9 +93,6 @@ export default function App() {
     if (rank === 'all' || !restored) return;
     setTarget({ team: 'allies', index: ownPosition }); setStarted(true);
   }}>
-    <span className="setup-eyebrow">Before the draft</span>
-    <h1>Set up your draft</h1>
-    <p>Choose your position and rank. Both stay fixed for this draft.</p>
     <label className="setup-field">Your position<select value={role} onChange={event => { const next = roles.find(value => value === event.target.value); if (next) setRole(next); }}>{roles.map(value => <option key={value} value={value}>{roleNames[value]}</option>)}</select></label>
     <label className="setup-field">Your rank<select value={rank} onChange={event => { const next = ranks.find(value => value === event.target.value); if (next) setRank(next); }}><option value="all" disabled>Select your rank</option>{ranks.filter(value => value !== 'all').map(value => <option key={value} value={value}>{formatRank(value)}</option>)}</select></label>
     {error && <div className="error" role="alert"><span>{error}</span><button type="button" onClick={() => { setError(''); setRefresh(value => value + 1); }}>Reload data</button></div>}
@@ -145,20 +142,17 @@ export default function App() {
       <section className="hero-picker" aria-label="Hero search">
         <div className="search-bar"><span aria-hidden="true">⌕</span><input ref={searchRef} type="search" aria-label="Search heroes" placeholder="Search heroes…" value={search} onChange={event => setSearch(event.target.value)} autoComplete="off" onKeyDown={event => { const first = results.find(hero => !unavailable.has(hero.id)); if (event.key === 'Enter' && first) { event.preventDefault(); selectHero(first); } if (event.key === 'Escape') setSearch(''); }} /><kbd>↵</kbd></div>
         <div className="search-meta"><span>Adding to <strong>{targetLabel}</strong></span>{query && <span>{results.length} found</span>}</div>
-        {!query && <div className="search-empty"><span className="empty-search-icon" aria-hidden="true">⌕</span><p>Find a hero for the draft</p><span>Search a name or alias, such as “Axe” or “PA”.</span></div>}
         {query && <div className="hero-grid" aria-label="Search results">{results.map(hero => <button className="hero-card" key={hero.id} disabled={unavailable.has(hero.id)} onClick={() => selectHero(hero)}><HeroImage hero={hero} /><span>{hero.name}</span>{unavailable.has(hero.id) && <small>Unavailable</small>}</button>)}</div>}
         {query && results.length === 0 && <p className="empty-message">No heroes found. Try another name.</p>}
         <div className="sr-only" role="status">{status}</div>
       </section>
 
       <section className="suggestions" aria-label="Suggested picks">
-        <div className="suggestions-heading"><h1>Suggested picks</h1><span>{statistics?.isDemo ? 'Sample ranking' : roleNames[role].split(' · ')[0]}</span></div>
-        {statistics?.isDemo && <p className="sample-note">Illustrative statistics. Load real data before using these picks in a match.</p>}
+        <div className="suggestions-heading"><h1>Suggested picks</h1></div>
         {!statistics && !error && <p className="empty-message">Loading statistics…</p>}
-        {statistics && suggestions.length === 0 && <p className="empty-message">No eligible heroes have statistics for this position and rank.</p>}
+        {statistics && suggestions.length === 0 && <p className="empty-message">No statistics yet.</p>}
         <div className="suggestion-list">{suggestions.map((suggestion, index) => <article key={suggestion.hero.id} className="suggestion">
-          <div className="suggestion-row"><span className="position">{index + 1}</span><HeroImage hero={suggestion.hero} /><div className="suggestion-name"><h2>{suggestion.hero.name}</h2><span>{suggestion.rankFallback ? 'All-rank data' : formatRank(rank)}</span></div><span className="fit-score" aria-label={`${suggestion.score} fit score`} title="Fit score combines role strength, matchups, and team needs. It is not a win probability.">{suggestion.score}<small>fit</small></span></div>
-          <details><summary>Why this hero</summary><div className="reasons">{suggestion.reasons.map(reason => <p key={reason}>{reason}</p>)}<p className="risk"><strong>Risk:</strong> {suggestion.risk}</p><p className="coverage">{suggestion.coverage}. Fit scores are not win probabilities.</p></div></details>
+          <div className="suggestion-row"><span className="position">{index + 1}</span><HeroImage hero={suggestion.hero} /><div className="suggestion-name"><h2>{suggestion.hero.name}</h2></div></div>
         </article>)}</div>
       </section>
     </main>

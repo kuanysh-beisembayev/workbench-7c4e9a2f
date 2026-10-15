@@ -32,7 +32,7 @@ export function recommend(heroes: Hero[], stats: Statistics, draft: Draft, role:
     if (!row) continue;
 
     // Shrink small samples towards a neutral 50% baseline.
-    const winRate = row.wins / row.matches;
+    const winRate = 'wins' in row ? row.wins / row.matches : row.winRate;
     const base = (winRate - 0.5) * row.matches / (row.matches + 500);
     const applicable = stats.matchups.filter(pair => pair.heroId === hero.id &&
       (pair.kind === 'enemy' ? enemies : allies).includes(pair.otherHeroId));
