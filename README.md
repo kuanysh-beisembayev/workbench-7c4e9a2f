@@ -18,7 +18,7 @@ The file contains a manually collected [Dota2ProTracker](https://dota2protracker
 
 The sample does not represent every rank. Matchup coverage is incomplete. Candidates need at least 500 role matches and sufficient data against every selected enemy. A role can show fewer than five heroes when evidence is insufficient. Empty drafts show role meta, which does not measure first-pick safety. The engine uses statistical heuristics; it does not predict a calibrated win probability. The interface has no numerical fit scores.
 
-Hero names and identifiers come from [OpenDota constants](https://github.com/odota/dotaconstants). Hero portraits load from Valve's Steam CDN. Dota 2 assets belong to Valve Corporation.
+Hero names and identifiers come from [OpenDota constants](https://github.com/odota/dotaconstants). Hero portraits from Valve's Steam CDN are stored in `public/images/heroes` and served with the app. The build checks every hero's portrait file and dimensions. Dota 2 assets belong to Valve Corporation.
 
 See [the data guide](docs/data.md) for the exact format and scoring method.
 

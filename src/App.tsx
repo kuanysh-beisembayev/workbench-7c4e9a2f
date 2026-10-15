@@ -9,7 +9,7 @@ type Target = { team: 'allies' | 'enemies'; index: number } | { team: 'bans' };
 
 function HeroImage({ hero, small = false }: { hero: Hero; small?: boolean }) {
   const [failed, setFailed] = useState(false);
-  const url = new URL('/apps/dota2/images/dota_react/heroes/' + encodeURIComponent(hero.slug) + '.png', 'https://cdn.cloudflare.steamstatic.com');
+  const url = new URL(import.meta.env.BASE_URL + 'images/heroes/' + encodeURIComponent(hero.slug) + '.png', document.baseURI);
   return failed ? <span className={`image-fallback${small ? ' small' : ''}`} aria-hidden="true">{hero.name.slice(0, 2)}</span> :
     <img className={`hero-image${small ? ' small' : ''}`} src={url.href} alt="" loading="lazy" onError={() => setFailed(true)} />;
 }
